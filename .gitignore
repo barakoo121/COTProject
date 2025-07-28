@@ -48,6 +48,7 @@ venv.bak/
 
 # Claude Code
 .claude/
+CLAUDE.md
 
 # Jupyter Notebook
 .ipynb_checkpoints
