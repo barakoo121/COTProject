@@ -1,0 +1,36 @@
+# CoT Embeddings Project Configuration
+
+# Dataset settings
+dataset:
+  name: "kaist-ai/CoT-Collection"
+  cache_dir: "./data/cache"
+  processed_dir: "./data/processed"
+
+# Embedding settings
+embedding:
+  model_name: "all-mpnet-base-v2"  # Sentence transformer model
+  batch_size: 32
+  max_length: 512
+
+# Vector index settings
+vector_index:
+  index_path: "./data/faiss_index"
+  dimension: 768  # Embedding dimension for all-mpnet-base-v2
+  index_type: "IndexFlatIP"  # Inner product for cosine similarity
+
+# Retrieval settings
+retrieval:
+  top_k: 1  # Number of similar examples to retrieve
+  similarity_threshold: 0.5
+
+# Generation settings
+generation:
+  model_name: "google/flan-t5-large"  # Use this as CoT-T5 alternative
+  max_length: 512
+  temperature: 0.7
+  do_sample: true
+
+# System settings
+system:
+  device: "cuda"  # Will fallback to cpu if cuda not available
+  random_seed: 42

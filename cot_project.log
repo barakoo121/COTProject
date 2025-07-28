@@ -1,0 +1,32 @@
+2025-07-28 19:07:36,211 - __main__ - INFO - Loaded configuration from config/config.yaml
+2025-07-28 19:07:36,212 - __main__ - INFO - Starting Phase 2: Retrieval Pipeline
+2025-07-28 19:07:37,898 - phase2.retrieval_pipeline - INFO - Loading embedding model: all-mpnet-base-v2
+2025-07-28 19:07:37,899 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-mpnet-base-v2
+2025-07-28 19:07:40,441 - phase2.retrieval_pipeline - INFO - Embedding model loaded successfully
+2025-07-28 19:07:40,441 - phase2.retrieval_pipeline - INFO - Loading vector index...
+2025-07-28 19:07:40,444 - faiss.loader - INFO - Loading faiss.
+2025-07-28 19:07:40,466 - faiss.loader - INFO - Successfully loaded faiss.
+2025-07-28 19:07:40,469 - faiss - INFO - Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
+2025-07-28 19:07:40,469 - phase1.vector_indexer - INFO - Loaded FAISS index from: data/faiss_index/cot_faiss_index.bin
+2025-07-28 19:07:40,469 - phase1.vector_indexer - INFO - Index contains 100 vectors
+2025-07-28 19:07:40,469 - phase1.vector_indexer - INFO - Dimension: 768
+2025-07-28 19:07:40,470 - phase2.retrieval_pipeline - INFO - Vector index loaded successfully
+2025-07-28 19:07:40,470 - phase2.retrieval_pipeline - INFO - Retrieving 3 examples for query: What is 8 * 9?...
+2025-07-28 19:07:40,535 - phase2.retrieval_pipeline - INFO - Retrieved 3 examples
+2025-07-28 19:07:40,535 - __main__ - INFO - Execution completed successfully
+2025-07-28 20:02:02,798 - __main__ - INFO - Loaded configuration from config/config.yaml
+2025-07-28 20:02:02,798 - __main__ - INFO - Starting Phase 2: Retrieval Pipeline
+2025-07-28 20:02:05,039 - phase2.retrieval_pipeline - INFO - Loading embedding model: all-mpnet-base-v2
+2025-07-28 20:02:05,040 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-mpnet-base-v2
+2025-07-28 20:02:07,553 - phase2.retrieval_pipeline - INFO - Embedding model loaded successfully
+2025-07-28 20:02:07,554 - phase2.retrieval_pipeline - INFO - Loading vector index...
+2025-07-28 20:02:07,558 - faiss.loader - INFO - Loading faiss.
+2025-07-28 20:02:07,588 - faiss.loader - INFO - Successfully loaded faiss.
+2025-07-28 20:02:07,591 - faiss - INFO - Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
+2025-07-28 20:02:07,594 - phase1.vector_indexer - INFO - Loaded FAISS index from: /Users/barakozmo/PycharmProjects/COTProject/data/faiss_index/cot_faiss_index.bin
+2025-07-28 20:02:07,594 - phase1.vector_indexer - INFO - Index contains 100 vectors
+2025-07-28 20:02:07,594 - phase1.vector_indexer - INFO - Dimension: 768
+2025-07-28 20:02:07,594 - phase2.retrieval_pipeline - INFO - Vector index loaded successfully
+2025-07-28 20:02:07,594 - phase2.retrieval_pipeline - INFO - Retrieving 3 examples for query: What is 7 * 8?...
+2025-07-28 20:02:08,311 - phase2.retrieval_pipeline - INFO - Retrieved 3 examples
+2025-07-28 20:02:08,311 - __main__ - INFO - Execution completed successfully

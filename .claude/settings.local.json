@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(source:*)",
+      "Bash(python:*)",
+      "Bash(mv:*)",
+      "Bash(true)"
+    ],
+    "deny": []
+  }
+}
