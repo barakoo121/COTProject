@@ -46,6 +46,9 @@ venv.bak/
 *.swo
 *~
 
+# Claude Code
+.claude/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -65,14 +68,7 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# Environments (duplicates removed)
 
 # Spyder project settings
 .spyderproject
