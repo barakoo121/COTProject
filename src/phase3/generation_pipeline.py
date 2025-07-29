@@ -4,11 +4,10 @@ Implements retrieval-augmented generation with CoT-T5 and comparison with baseli
 """
 
 import logging
-import torch
+import os
 from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import json
+from typing import Dict, List, Any
+from openai import OpenAI
 import time
 
 logger = logging.getLogger(__name__)
@@ -25,49 +24,41 @@ class CoTGenerationPipeline:
         """
         self.config = config
         self.generation_config = config['generation']
-        self.device = config['system']['device']
         
-        # Model configuration
+        # OpenAI configuration
         self.model_name = self.generation_config['model_name']
-        self.max_length = self.generation_config['max_length']
+        self.max_tokens = self.generation_config['max_tokens']
         self.temperature = self.generation_config['temperature']
-        self.do_sample = self.generation_config['do_sample']
         
-        # Components
-        self.tokenizer = None
-        self.model = None
+        # Initialize OpenAI client
+        api_key = self.generation_config.get('api_key') or os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable or add api_key to config.")
+        
+        self.client = OpenAI(api_key=api_key)
         self.retrieval_pipeline = None
         
         # Cache for efficiency
-        self._model_loaded = False
         self._retrieval_loaded = False
     
     def load_components(self):
-        """Load the generation model and retrieval pipeline."""
-        self._load_generation_model()
+        """Load the retrieval pipeline (OpenAI client is already initialized)."""
         self._load_retrieval_pipeline()
     
-    def _load_generation_model(self):
-        """Load the T5 model for generation."""
-        if self._model_loaded:
-            return
-        
-        logger.info(f"Loading generation model: {self.model_name}")
-        
+    def _test_openai_connection(self):
+        """Test OpenAI API connection."""
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float32 if self.device == 'cpu' else torch.float16
+            # Make a simple test call to verify API key works
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=1,
+                temperature=0
             )
-            self.model.to(self.device)
-            self.model.eval()
-            
-            self._model_loaded = True
-            logger.info("Generation model loaded successfully")
-            
+            logger.info("OpenAI API connection successful")
+            return True
         except Exception as e:
-            logger.error(f"Failed to load generation model: {e}")
+            logger.error(f"OpenAI API connection failed: {e}")
             raise
     
     def _load_retrieval_pipeline(self):
@@ -102,39 +93,30 @@ class CoTGenerationPipeline:
         Returns:
             Dictionary with generation results
         """
-        if not self._model_loaded:
-            self._load_generation_model()
-        
         # Create baseline prompt that asks for direct answer only
-        baseline_prompt = f"""Answer the following question directly with just the final answer. Do not show your reasoning or steps.
+        baseline_prompt = f"""Question: {query}
 
-Question: {query}
-
-Answer:"""
+Give me the final answer only."""
         
         start_time = time.time()
         
-        # Tokenize and generate
-        inputs = self.tokenizer(
-            baseline_prompt,
-            return_tensors="pt",
-            max_length=self.max_length,
-            truncation=True,
-            padding=True
-        ).to(self.device)
-        
-        with torch.no_grad():
-            outputs = self.model.generate(
-                inputs.input_ids,
-                max_length=self.max_length,
-                temperature=self.temperature,
-                do_sample=self.do_sample,
-                pad_token_id=self.tokenizer.eos_token_id,
-                num_return_sequences=1
+        try:
+            # Call OpenAI API
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that provides direct, concise answers without showing reasoning steps."},
+                    {"role": "user", "content": baseline_prompt}
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature
             )
-        
-        # Decode response
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            
+            generated_text = response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            logger.error(f"OpenAI API call failed: {e}")
+            generated_text = f"Error: {str(e)}"
         
         generation_time = time.time() - start_time
         
@@ -142,12 +124,12 @@ Answer:"""
             'method': 'baseline',
             'query': query,
             'prompt': baseline_prompt,
-            'response': response,
+            'response': generated_text,
             'generation_time': generation_time,
             'retrieved_examples': None
         }
     
-    def generate_with_cot(self, query: str, k: int = 1) -> Dict[str, Any]:
+    def generate_with_cot(self, query: str, k: int = 5) -> Dict[str, Any]:
         """
         Generate response using our retrieval-augmented CoT approach.
         
@@ -158,8 +140,6 @@ Answer:"""
         Returns:
             Dictionary with generation results
         """
-        if not self._model_loaded:
-            self._load_generation_model()
         if not self._retrieval_loaded:
             self._load_retrieval_pipeline()
         
@@ -168,49 +148,46 @@ Answer:"""
         # Retrieve relevant examples
         examples, scores = self.retrieval_pipeline.retrieve(query, k=k)
         
-        # Format the prompt with retrieved example
+        # Format the prompt with retrieved examples
         if examples:
-            best_example = examples[0]
-            cot_prompt = f"""# Example demonstrating how to think step-by-step.
-Question: {best_example['question']}
+            # Use up to 5 examples
+            examples_text = ""
+            for i, example in enumerate(examples[:5], 1):
+                examples_text += f"""Example {i}:
+Question: {example['question']}
+Rationale: {example['rationale']}
+Answer: {example['answer']}
 
-Rationale: {best_example['rationale']} Let's think step by step. The final answer is {best_example['answer']}.
+"""
+            
+            cot_prompt = f"""Question: {query}
 
----
+Here are examples of how to approach similar problems:
 
-# Now, solve the following problem using the same step-by-step thinking.
-Question: {query}
-
-Rationale:"""
+{examples_text}Now think step by step to solve the question above."""
         else:
             # Fallback if no examples retrieved
-            cot_prompt = f"""Let's think step by step to solve this problem.
+            cot_prompt = f"""Question: {query}
 
-Question: {query}
-
-Rationale:"""
+Think step by step to solve this question."""
         
-        # Tokenize and generate
-        inputs = self.tokenizer(
-            cot_prompt,
-            return_tensors="pt",
-            max_length=self.max_length,
-            truncation=True,
-            padding=True
-        ).to(self.device)
-        
-        with torch.no_grad():
-            outputs = self.model.generate(
-                inputs.input_ids,
-                max_length=self.max_length,
-                temperature=self.temperature,
-                do_sample=self.do_sample,
-                pad_token_id=self.tokenizer.eos_token_id,
-                num_return_sequences=1
+        try:
+            # Call OpenAI API
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that thinks step-by-step and shows detailed reasoning before providing the final answer."},
+                    {"role": "user", "content": cot_prompt}
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature
             )
-        
-        # Decode response
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            
+            generated_text = response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            logger.error(f"OpenAI API call failed: {e}")
+            generated_text = f"Error: {str(e)}"
         
         generation_time = time.time() - start_time
         
@@ -218,13 +195,13 @@ Rationale:"""
             'method': 'retrieval_augmented_cot',
             'query': query,
             'prompt': cot_prompt,
-            'response': response,
+            'response': generated_text,
             'generation_time': generation_time,
             'retrieved_examples': examples,
             'similarity_scores': scores
         }
     
-    def compare_methods(self, query: str, k: int = 1) -> Dict[str, Any]:
+    def compare_methods(self, query: str, k: int = 5) -> Dict[str, Any]:
         """
         Compare baseline and CoT methods on the same query.
         
@@ -257,7 +234,7 @@ Rationale:"""
         
         return comparison
     
-    def batch_compare(self, queries: List[str], k: int = 1) -> List[Dict[str, Any]]:
+    def batch_compare(self, queries: List[str], k: int = 5) -> List[Dict[str, Any]]:
         """
         Compare methods on multiple queries.
         
@@ -379,7 +356,7 @@ def main():
     generation_pipeline = CoTGenerationPipeline(config)
     
     # Load components
-    print("Loading models and components...")
+    print("Loading components...")
     generation_pipeline.load_components()
     
     # Test queries
@@ -396,22 +373,22 @@ def main():
     all_comparisons = []
     for query in test_queries:
         print(f"Processing: {query}")
-        comparison = generation_pipeline.compare_methods(query, k=1)
+        comparison = generation_pipeline.compare_methods(query, k=5)
         all_comparisons.append(comparison)
         
         # Print formatted report
-        report = generation_pipeline.format_comparison_report(comparison)
-        print(report)
-        print("\n" + "="*80 + "\n")
+        # report = generation_pipeline.format_comparison_report(comparison)
+        # print(report)
+        # print("\n" + "="*80 + "\n")
     
     # Evaluate overall performance
-    metrics = generation_pipeline.evaluate_performance(all_comparisons)
-    print("🎯 OVERALL PERFORMANCE METRICS:")
-    for key, value in metrics.items():
-        if isinstance(value, float):
-            print(f"{key}: {value:.4f}")
-        else:
-            print(f"{key}: {value}")
+    # metrics = generation_pipeline.evaluate_performance(all_comparisons)
+    # print("🎯 OVERALL PERFORMANCE METRICS:")
+    # for key, value in metrics.items():
+    #     if isinstance(value, float):
+    #         print(f"{key}: {value:.4f}")
+    #     else:
+    #         print(f"{key}: {value}")
 
 if __name__ == "__main__":
     main()
