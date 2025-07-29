@@ -8,7 +8,6 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 from sentence_transformers import SentenceTransformer
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +134,11 @@ class CoTRetrievalPipeline:
         if k is None:
             k = self.top_k
         
+        print(f"\n🔍 SEARCHING FOR SIMILAR QUESTIONS")
+        print(f"Query: {query}")
+        print(f"Looking for top {k} similar examples...")
+        print("-" * 80)
+        
         logger.info(f"Retrieving {k} examples for query: {query[:100]}...")
         
         # Encode the query
@@ -142,6 +146,18 @@ class CoTRetrievalPipeline:
         
         # Search the vector index
         scores, retrieved_metadata = self.vector_indexer.search(query_embedding, k=k)
+        
+        # Print the retrieved examples
+        print(f"📋 RETRIEVED {len(retrieved_metadata)} SIMILAR EXAMPLES:")
+        for i, (metadata, score) in enumerate(zip(retrieved_metadata, scores), 1):
+            print(f"\n{i}. Similarity Score: {score:.4f}")
+            print(f"   Question: {metadata['question']}")
+            print(f"   Answer: {metadata['answer']}")
+            if len(metadata['rationale']) > 100:
+                print(f"   Rationale: {metadata['rationale'][:100]}...")
+            else:
+                print(f"   Rationale: {metadata['rationale']}")
+        print("-" * 80)
         
         # Filter by similarity threshold if specified
         if self.similarity_threshold > 0:
@@ -287,31 +303,9 @@ def main():
         print(f"=== Query {i+1}: {query} ===")
         
         # Retrieve examples
-        examples, scores = retrieval_pipeline.retrieve(query, k=2)
-        
-        # Show results
-        for j, (example, score) in enumerate(zip(examples, scores)):
-            print(f"\nResult {j+1} (score: {score:.4f}):")
-            print(f"  Question: {example['question']}")
-            print(f"  Answer: {example['answer']}")
-        
+        retrieval_pipeline.retrieve(query, k=5)
+
         print("\n" + "="*50 + "\n")
-    
-    # Test prompt formatting for each query
-    print("="*60)
-    print("TESTING PROMPT FORMATTING")
-    print("="*60)
-    
-    for i, query in enumerate(test_queries):
-        print(f"\n### QUERY {i+1}: {query}")
-        print("-" * 50)
-        
-        prompt_format = retrieval_pipeline.retrieve_and_format(
-            query, 
-            format_type="prompt"
-        )
-        print(prompt_format)
-        print("\n" + "="*60)
 
 if __name__ == "__main__":
     main()

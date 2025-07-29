@@ -4,10 +4,9 @@ Loads and processes the 1.84M question-rationale pairs from kaist-ai/CoT-Collect
 """
 
 import logging
-import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
-from datasets import load_dataset, Dataset
+from typing import Dict, List, Any
+from datasets import Dataset
 import json
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ class CoTDatasetProcessor:
         self.dataset = None
         self.processed_data = None
     
-    def load_dataset(self, subset: str = None, max_samples: int = 5000) -> Dataset:
+    def load_dataset(self, subset: str = None, max_samples: int = 15000) -> Dataset:
         """
         Load the CoT-Collection dataset from §e.
         
@@ -353,17 +352,17 @@ def main():
     processor = CoTDatasetProcessor(config)
     
     # Load and explore dataset
-    dataset = processor.load_dataset()
+    processor.load_dataset()
     structure = processor.explore_dataset_structure()
     
     print("Dataset structure:")
     print(json.dumps(structure, indent=2, default=str))
     
     # Process dataset
-    triplets = processor.process_dataset()
+    processor.process_dataset()
     
     # Save processed data
-    output_path = processor.save_processed_data("test_triplets.json")
+    processor.save_processed_data()
     
     # Get statistics
     stats = processor.get_statistics()

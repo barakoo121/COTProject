@@ -162,8 +162,6 @@ Answer: {example['answer']}
             
             cot_prompt = f"""Question: {query}
 
-Here are examples of how to approach similar problems:
-
 {examples_text}Now think step by step to solve the question above."""
         else:
             # Fallback if no examples retrieved

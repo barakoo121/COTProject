@@ -20,5 +20,8 @@ python-dotenv>=1.0.0
 # OpenAI API
 openai>=1.0.0
 
+# Fix for urllib3/OpenSSL warning on macOS
+urllib3<2.0.0
+
 # Optional: for better performance with large datasets
 pyarrow>=12.0.0

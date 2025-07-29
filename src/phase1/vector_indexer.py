@@ -9,7 +9,6 @@ import faiss
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 import json
-import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -311,18 +310,18 @@ def main():
         raise Exception("Embeddings not found. Generate them first.")
     
     # Create index
-    index = indexer.create_index(embeddings, metadata)
+    indexer.create_index(embeddings, metadata)
     
     # Save index
     indexer.save_index()
     
     # Test search
     if len(embeddings) > 0:
-        # Use first embedding as query
+        # Use first embedding as a query
         query_embedding = embeddings[0]
-        scores, results = indexer.search(query_embedding, k=3)
+        scores, results = indexer.search(query_embedding, k=5)
         
-        print(f"\nTop 3 search results:")
+        print(f"\nTop 5 search results:")
         for i, (score, result) in enumerate(zip(scores, results)):
             print(f"  {i+1}. Score: {score:.4f}")
             print(f"     Question: {result['question'][:80]}...")

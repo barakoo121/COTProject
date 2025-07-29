@@ -5,13 +5,11 @@ Generates sentence embeddings for questions using sentence-transformers.
 
 import logging
 import numpy as np
-import torch
 from pathlib import Path
 from typing import Dict, List, Any, Tuple
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 import json
-import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -288,7 +286,7 @@ def main():
     generator = CoTEmbeddingGenerator(config)
     
     # Load test triplets
-    triplets = generator.load_triplets("test_triplets.json")
+    triplets = generator.load_triplets("processed_triplets.json")
     
     # Generate embeddings
     embeddings, metadata = generator.generate_embeddings(triplets)
