@@ -18,7 +18,7 @@ pyyaml>=6.0.0
 python-dotenv>=1.0.0
 
 # OpenAI API
-openai>=1.0.0
+openai>=1.30.0
 
 # Fix for urllib3/OpenSSL warning on macOS
 urllib3<2.0.0

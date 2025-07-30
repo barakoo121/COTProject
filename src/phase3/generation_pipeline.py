@@ -312,29 +312,16 @@ Think step by step to solve this question."""
         report.append("=" * 80)
         
         # Baseline results
-        report.append("\n📍 BASELINE (Direct Answer Only):")
+        report.append("\n📍 BASELINE APPROACH:")
+        report.append(f"Prompt: {comparison['baseline']['prompt']}")
         report.append(f"Response: {comparison['baseline']['response']}")
-        report.append(f"Generation time: {comparison['baseline']['generation_time']:.3f}s")
+        report.append(f"Time: {comparison['baseline']['generation_time']:.3f}s")
         
         # CoT results
-        report.append("\n🧠 RETRIEVAL-AUGMENTED CoT:")
-        if comparison['retrieval_augmented_cot']['retrieved_examples']:
-            best_example = comparison['retrieval_augmented_cot']['retrieved_examples'][0]
-            similarity = comparison['retrieval_augmented_cot']['similarity_scores'][0]
-            report.append(f"Retrieved example (similarity: {similarity:.4f}):")
-            report.append(f"  Question: {best_example['question']}")
-            report.append(f"  Answer: {best_example['answer']}")
-        
+        report.append("\n🧠 RETRIEVAL-AUGMENTED CoT APPROACH:")
+        report.append(f"Full Prompt: {comparison['retrieval_augmented_cot']['prompt']}")
         report.append(f"Response: {comparison['retrieval_augmented_cot']['response']}")
-        report.append(f"Generation time: {comparison['retrieval_augmented_cot']['generation_time']:.3f}s")
-        
-        # Summary
-        summary = comparison['comparison_summary']
-        report.append(f"\n📊 COMPARISON SUMMARY:")
-        report.append(f"Time overhead: +{summary['time_difference']:.3f}s")
-        report.append(f"Examples retrieved: {summary['retrieved_examples_count']}")
-        if summary['best_similarity_score']:
-            report.append(f"Best similarity: {summary['best_similarity_score']:.4f}")
+        report.append(f"Time: {comparison['retrieval_augmented_cot']['generation_time']:.3f}s")
         
         return "\n".join(report)
 
@@ -357,12 +344,87 @@ def main():
     print("Loading components...")
     generation_pipeline.load_components()
     
-    # Test queries
+    # Comprehensive test queries covering math, logic, reasoning, and complex problems
     test_queries = [
+        # Basic Math
         "What is 15 * 24?",
+        "Calculate 147 + 256 - 89",
+        "What is 12% of 250?",
+        "If 3x + 7 = 22, what is x?",
+        "What is the square root of 144?",
+        
+        # Word Problems - Money
         "If I have 50 dollars and spend 18, how much is left?",
+        "Sarah buys 3 apples for $1.20 each and 2 oranges for $0.80 each. How much does she spend in total?",
+        "A store offers 25% off all items. If a shirt costs $40, what is the sale price?",
+        "John saves $15 per week. How much will he have saved after 8 weeks?",
+        "If a pizza costs $12 and you want to split it equally among 4 people, how much does each person pay?",
+        
+        # Word Problems - Time and Distance
+        "A car travels 60 miles per hour. How far will it go in 2.5 hours?",
+        "If it takes 45 minutes to walk 3 miles, how long does it take to walk 1 mile?",
+        "A train leaves at 2:30 PM and arrives at 5:15 PM. How long was the journey?",
+        "If you run 2 miles in 16 minutes, what is your pace per mile?",
+        
+        # Logic and Reasoning
+        "If all cats are mammals and Fluffy is a cat, what can we conclude about Fluffy?",
+        "A sequence goes: 2, 4, 8, 16, ... What is the next number?",
+        "If it's raining, then the ground is wet. The ground is wet. Can we conclude it's raining?",
+        "In a group of 30 people, 18 like coffee and 20 like tea. How many like both if everyone likes at least one?",
+        
+        # Science and Nature
         "How do plants make their food?",
-        "Why do objects fall when dropped?"
+        "Why do objects fall when dropped?",
+        "What causes the seasons to change?",
+        "Why does ice float on water?",
+        "How does a refrigerator keep food cold?",
+        "What makes the sky appear blue?",
+        
+        # Complex Multi-Step Problems
+        "A recipe serves 4 people and calls for 2 cups of flour. How much flour is needed to serve 10 people?",
+        "A rectangular garden is 12 feet long and 8 feet wide. How much fencing is needed to go around it?",
+        "If a book has 240 pages and you read 15 pages per day, how many days will it take to finish?",
+        "A company has 120 employees. If 30% work remotely and 40% of the remote workers are in different time zones, how many remote workers are in different time zones?",
+        
+        # Probability and Statistics
+        "What is the probability of rolling a 6 on a fair die?",
+        "If you flip a coin 3 times, what's the probability of getting all heads?",
+        "In a class of 25 students, 15 are girls. What percentage are boys?",
+        
+        # Geometry
+        "What is the area of a circle with radius 5?",
+        "A triangle has sides of length 3, 4, and 5. What type of triangle is it?",
+        "What is the volume of a cube with side length 6?",
+        
+        # Proportions and Ratios
+        "If 2 pencils cost $1.50, how much do 5 pencils cost?",
+        "A map scale shows 1 inch = 50 miles. If two cities are 3.5 inches apart on the map, what is the actual distance?",
+        "If it takes 3 workers 6 hours to paint a fence, how long would it take 2 workers?",
+        
+        # Complex Word Problems
+        "Lisa is twice as old as her brother. In 5 years, she will be 1.5 times as old as he will be then. How old is Lisa now?",
+        "A water tank can be filled by pipe A in 4 hours and by pipe B in 6 hours. How long does it take to fill the tank with both pipes open?",
+        "Two trains start from opposite ends of a 300-mile track and travel toward each other. Train A travels at 70 mph and Train B at 80 mph. When will they meet?",
+        
+        # Critical Thinking
+        "If you have a 3-gallon jug and a 5-gallon jug, how can you measure exactly 4 gallons?",
+        "A farmer has chickens and cows. There are 20 heads and 56 legs total. How many chickens are there?",
+        "You have 12 balls, 11 are the same weight and 1 is different. Using a balance scale only 3 times, how do you find the different ball?",
+        
+        # Estimation and Approximation
+        "Approximately how many grains of rice are in a cup?",
+        "Estimate how many cars pass through a busy intersection in one hour during rush hour.",
+        "About how many words are in a typical novel?",
+        
+        # Pattern Recognition
+        "What comes next in the sequence: 1, 1, 2, 3, 5, 8, ?",
+        "Complete the pattern: A, C, F, J, O, ?",
+        "If Monday is day 1, Wednesday is day 3, what day is day 12?",
+        
+        # Applied Mathematics
+        "If you invest $1000 at 5% annual interest compounded yearly, how much will you have after 3 years?",
+        "A ladder leans against a wall. The bottom is 8 feet from the wall and the ladder is 10 feet long. How high up the wall does it reach?",
+        "If a cylindrical water tank has a radius of 3 feet and height of 8 feet, how many gallons does it hold? (1 cubic foot = 7.48 gallons)"
     ]
     
     print("Running comparisons...\n")
@@ -375,18 +437,18 @@ def main():
         all_comparisons.append(comparison)
         
         # Print formatted report
-        # report = generation_pipeline.format_comparison_report(comparison)
-        # print(report)
-        # print("\n" + "="*80 + "\n")
+        report = generation_pipeline.format_comparison_report(comparison)
+        print(report)
+        print("\n" + "="*80 + "\n")
     
     # Evaluate overall performance
-    # metrics = generation_pipeline.evaluate_performance(all_comparisons)
-    # print("🎯 OVERALL PERFORMANCE METRICS:")
-    # for key, value in metrics.items():
-    #     if isinstance(value, float):
-    #         print(f"{key}: {value:.4f}")
-    #     else:
-    #         print(f"{key}: {value}")
+    metrics = generation_pipeline.evaluate_performance(all_comparisons)
+    print("🎯 OVERALL PERFORMANCE METRICS:")
+    for key, value in metrics.items():
+        if isinstance(value, float):
+            print(f"{key}: {value:.4f}")
+        else:
+            print(f"{key}: {value}")
 
 if __name__ == "__main__":
     main()

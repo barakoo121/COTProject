@@ -121,10 +121,42 @@ def main():
             print(report)
             
         else:
-            # Run demo
-            logger.info("Running CoT Embeddings Demo")
-            import subprocess
-            subprocess.run([sys.executable, "demo.py"])
+            # Run all phases
+            logger.info("Running full CoT Embeddings Pipeline")
+            
+            # Phase 1: Build knowledge base if needed
+            from phase1.embedding_generator import CoTEmbeddingGenerator
+            from phase1.vector_indexer import CoTVectorIndexer
+            
+            generator = CoTEmbeddingGenerator(config)
+            try:
+                generator.load_embeddings()
+                logger.info("Using existing embeddings")
+            except FileNotFoundError:
+                logger.info("Building embeddings...")
+                triplets = generator.load_triplets("synthetic_test_triplets.json")
+                embeddings, metadata = generator.generate_embeddings(triplets)
+                
+                indexer = CoTVectorIndexer(config)
+                indexer.create_index(embeddings, metadata)
+                indexer.save_index()
+            
+            # Phase 2 & 3: Run generation comparison
+            from phase3.generation_pipeline import CoTGenerationPipeline
+            
+            generation_pipeline = CoTGenerationPipeline(config)
+            generation_pipeline.load_components()
+            
+            test_queries = [
+                "What is 15 * 24?",
+                "If I have 50 dollars and spend 18, how much is left?"
+            ]
+            
+            for query in test_queries:
+                comparison = generation_pipeline.compare_methods(query, k=5)
+                report = generation_pipeline.format_comparison_report(comparison)
+                print(report)
+                print("\n" + "="*80 + "\n")
             
     except Exception as e:
         logger.error(f"Error during execution: {e}")
