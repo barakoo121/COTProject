@@ -23,46 +23,6 @@ This project implements a three-phase pipeline to enhance language model reasoni
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## Project Structure
-
-```
-COTProject/
-├── src/                     # Source code modules
-│   ├── phase1/              # Knowledge base creation
-│   │   ├── dataset_processor.py    # CoT-Collection data processing
-│   │   ├── embedding_generator.py  # Question embeddings (all-mpnet-base-v2)
-│   │   └── vector_indexer.py       # FAISS index creation/management
-│   ├── phase2/              # Retrieval pipeline
-│   │   └── retrieval_pipeline.py   # Query processing & example retrieval
-│   ├── phase3/              # Generation pipeline
-│   │   └── generation_pipeline.py  # OpenAI API baseline vs CoT comparison
-│   └── utils/
-│       └── config_loader.py        # Configuration management
-├── config/
-│   └── config.yaml          # System configuration (OpenAI API settings)
-├── tests/                   # Test files and debugging scripts
-│   ├── test_5k_dataset.py          # Dataset processing tests
-│   ├── test_full_pipeline.py       # End-to-end pipeline tests
-│   ├── test_real_embeddings.py     # Embedding generation tests
-│   └── [other test files]          # Various component tests
-├── data/                    # Local data directory (git-ignored)
-│   ├── processed/           # Processed datasets and embeddings
-│   │   ├── question_embeddings.npy        # Generated embeddings (768-dim)
-│   │   ├── embedding_metadata.json        # Embedding metadata
-│   │   ├── embedding_config.json          # Model configuration
-│   │   ├── processed_triplets.json        # Processed Q-R-A triplets
-│   │   └── synthetic_test_triplets.json   # Test data
-│   ├── faiss_index/         # FAISS vector indices
-│   │   ├── cot_faiss_index.bin            # Binary FAISS index
-│   │   └── index_metadata.json            # Index configuration
-│   └── cache/               # HuggingFace datasets cache
-│       └── datasets--kaist-ai--CoT-Collection/  # Cached CoT-Collection
-├── main.py                  # Main pipeline execution
-├── requirements.txt         # Python dependencies
-├── CLAUDE.md               # Development instructions
-├── RESULTS_ANALYSIS.md     # Detailed performance analysis
-└── test_results.txt        # Latest test execution results
-```
 
 ## Key Features
 
@@ -115,7 +75,7 @@ What is 25 × 17?
 - **HuggingFace Transformers**: Sentence-transformers ecosystem
 - **FAISS**: Fast similarity search and clustering  
 - **CoT-Collection Dataset**: 1.8M question-rationale-answer pairs
-- **OpenAI API**: GPT-3.5-turbo for generation tasks
+- **OpenAI API**: GPT-3.5-turbo-0125 for generation tasks
 
 ### Data Processing Pipeline
 ```python
@@ -209,76 +169,6 @@ The system employs a configurable similarity threshold (default: 0.5) to filter 
 
 The retrieval system maintains a 100% success rate above the 0.5 threshold across our evaluation dataset, with mean similarity score of 0.531.
 
-## Quick Start
-
-### Prerequisites
-- Python 3.9+
-- OpenAI API key (for generation pipeline)
-- ~2GB disk space for embeddings and FAISS index
-
-### Setup Instructions
-
-1. **Clone Repository**:
-   ```bash
-   git clone <repository-url>
-   cd COTProject
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure OpenAI API**:
-   ```bash
-   export OPENAI_API_KEY="your-openai-api-key-here"
-   ```
-   Or add your API key to `config/config.yaml`:
-   ```yaml
-   generation:
-     api_key: "your-openai-api-key-here"
-   ```
-
-4. **Initialize Data Directory Structure**:
-   The `data/` directory is git-ignored but will be created automatically. Initial run will:
-   ```bash
-   # This happens automatically on first run
-   mkdir -p data/{processed,faiss_index,cache}
-   ```
-
-5. **Build Knowledge Base (First Time)**:
-   ```bash
-   # Process dataset and build embeddings (~5-10 minutes)
-   python -m src.phase1.dataset_processor
-   python -m src.phase1.embedding_generator
-   python -m src.phase1.vector_indexer
-   ```
-
-6. **Run Full Pipeline**:
-   ```bash
-   python main.py
-   ```
-
-### Alternative: Quick Test with Existing Data
-If embeddings are already built, test individual components:
-```bash
-# Test retrieval only (fast)
-python src/phase2/retrieval_pipeline.py
-
-# Test generation with OpenAI (requires API key)
-python src/phase3/generation_pipeline.py
-
-# Run specific tests
-python tests/test_5k_dataset.py
-```
-
-### Data Directory Initialization
-Since `data/` is git-ignored, first-time setup will automatically:
-1. Download CoT-Collection dataset to `data/cache/`
-2. Process 15,000 samples to `data/processed/`
-3. Generate 768-dimensional embeddings (~60MB)
-4. Build FAISS index for fast similarity search
-5. Save configuration files for reproducibility
 
 ## Results & Evaluation
 
@@ -326,7 +216,7 @@ We conducted extensive testing with 52 carefully designed queries covering:
 **Query:** "If a cylindrical water tank has a radius of 3 feet and height of 8 feet, how many gallons does it hold?"
 
 **Baseline Response:**
-> "The cylindrical water tank holds 565.44 gallons."
+> "The cylindrical water tank holds 545.44 gallons."
 
 **CoT Response:**
 > "To find the volume of the cylindrical water tank, we use the formula for the volume of a cylinder: V = πr²h
@@ -410,3 +300,115 @@ This implementation is based on Chain of Thought prompting research, specificall
 - Advanced prompt engineering techniques
 - Performance benchmarking against standard datasets
 - Support for additional language models
+
+## Project Structure
+
+```
+COTProject/
+├── src/                     # Source code modules
+│   ├── phase1/              # Knowledge base creation
+│   │   ├── dataset_processor.py    # CoT-Collection data processing
+│   │   ├── embedding_generator.py  # Question embeddings (all-mpnet-base-v2)
+│   │   └── vector_indexer.py       # FAISS index creation/management
+│   ├── phase2/              # Retrieval pipeline
+│   │   └── retrieval_pipeline.py   # Query processing & example retrieval
+│   ├── phase3/              # Generation pipeline
+│   │   └── generation_pipeline.py  # OpenAI API baseline vs CoT comparison
+│   └── utils/
+│       └── config_loader.py        # Configuration management
+├── config/
+│   └── config.yaml          # System configuration (OpenAI API settings)
+├── tests/                   # Test files and debugging scripts
+│   ├── test_5k_dataset.py          # Dataset processing tests
+│   ├── test_full_pipeline.py       # End-to-end pipeline tests
+│   ├── test_real_embeddings.py     # Embedding generation tests
+│   └── [other test files]          # Various component tests
+├── data/                    # Local data directory (git-ignored)
+│   ├── processed/           # Processed datasets and embeddings
+│   │   ├── question_embeddings.npy        # Generated embeddings (768-dim)
+│   │   ├── embedding_metadata.json        # Embedding metadata
+│   │   ├── embedding_config.json          # Model configuration
+│   │   ├── processed_triplets.json        # Processed Q-R-A triplets
+│   │   └── synthetic_test_triplets.json   # Test data
+│   ├── faiss_index/         # FAISS vector indices
+│   │   ├── cot_faiss_index.bin            # Binary FAISS index
+│   │   └── index_metadata.json            # Index configuration
+│   └── cache/               # HuggingFace datasets cache
+│       └── datasets--kaist-ai--CoT-Collection/  # Cached CoT-Collection
+├── main.py                  # Main pipeline execution
+├── requirements.txt         # Python dependencies
+├── CLAUDE.md               # Development instructions
+├── RESULTS_ANALYSIS.md     # Detailed performance analysis
+└── test_results.txt        # Latest test execution results
+```
+
+## Quick Start
+
+### Prerequisites
+- Python 3.9+
+- OpenAI API key (for generation pipeline)
+- ~2GB disk space for embeddings and FAISS index
+
+### Setup Instructions
+
+1. **Clone Repository**:
+   ```bash
+   git clone <repository-url>
+   cd COTProject
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure OpenAI API**:
+   ```bash
+   export OPENAI_API_KEY="your-openai-api-key-here"
+   ```
+   Or add your API key to `config/config.yaml`:
+   ```yaml
+   generation:
+     api_key: "your-openai-api-key-here"
+   ```
+
+4. **Initialize Data Directory Structure**:
+   The `data/` directory is git-ignored but will be created automatically. Initial run will:
+   ```bash
+   # This happens automatically on first run
+   mkdir -p data/{processed,faiss_index,cache}
+   ```
+
+5. **Build Knowledge Base (First Time)**:
+   ```bash
+   # Process dataset and build embeddings (~5-10 minutes)
+   python -m src.phase1.dataset_processor
+   python -m src.phase1.embedding_generator
+   python -m src.phase1.vector_indexer
+   ```
+
+6. **Run Full Pipeline**:
+   ```bash
+   python main.py
+   ```
+
+### Alternative: Quick Test with Existing Data
+If embeddings are already built, test individual components:
+```bash
+# Test retrieval only (fast)
+python src/phase2/retrieval_pipeline.py
+
+# Test generation with OpenAI (requires API key)
+python src/phase3/generation_pipeline.py
+
+# Run specific tests
+python tests/test_5k_dataset.py
+```
+
+### Data Directory Initialization
+Since `data/` is git-ignored, first-time setup will automatically:
+1. Download CoT-Collection dataset to `data/cache/`
+2. Process 15,000 samples to `data/processed/`
+3. Generate 768-dimensional embeddings (~60MB)
+4. Build FAISS index for fast similarity search
+5. Save configuration files for reproducibility
